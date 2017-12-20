@@ -4,6 +4,8 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/ioutil"
+	"os"
 )
 
 // buffer is a piece table implementation that serves the purpose of editing text
@@ -27,6 +29,28 @@ func New(r io.ReadSeeker, w io.ReadWriteSeeker, length int64) *Buffer {
 		t:      newTable(r, length),
 		length: length,
 	}
+}
+
+func NewWithFile(filename string) (*Buffer, func(), error) {
+	r, err := os.Open(filename)
+	if err != nil {
+		return nil, nil, err
+	}
+	stat, err := os.Stat(os.Args[1])
+	if err != nil {
+		return nil, nil, err
+	}
+
+	w, err := ioutil.TempFile("", "edi")
+	if err != nil {
+		return nil, nil, err
+	}
+
+	b := New(r, w, stat.Size())
+	return b, func() {
+		r.Close()
+		w.Close()
+	}, nil
 }
 
 type table struct {
