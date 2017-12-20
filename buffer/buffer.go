@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"io/ioutil"
 	"os"
 )
 
@@ -41,7 +40,8 @@ func NewWithFile(filename string) (*Buffer, func(), error) {
 		return nil, nil, err
 	}
 
-	w, err := ioutil.TempFile("", "edi")
+	tempname := filename + "~"
+	w, err := os.OpenFile(tempname, os.O_CREATE|os.O_TRUNC|os.O_RDWR|os.O_APPEND, 0644)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -50,6 +50,7 @@ func NewWithFile(filename string) (*Buffer, func(), error) {
 	return b, func() {
 		r.Close()
 		w.Close()
+		os.Remove(tempname)
 	}, nil
 }
 
